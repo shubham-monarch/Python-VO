@@ -1,10 +1,13 @@
+#! /usr/bin/env python3
+
 import os
 
 import numpy as np
 import cv2
 import argparse
 import yaml
-import logging
+import logging, coloredlogs
+from tqdm import tqdm
 
 from utils.tools import plot_keypoints
 
@@ -59,13 +62,22 @@ class TrajPlotter(object):
 
 def run(args):
     with open(args.config, 'r') as f:
+        # config = yaml.load(f, Loader=yaml.FullLoader)
         config = yaml.load(f)
 
     # create dataloader
+    logging.warning(f"Loading dataloader")
     loader = create_dataloader(config["dataset"])
+
+    logging.warning(f"loader: {loader}")
+    return
+
+    # exit(1)
     # create detector
+    logging.warning(f"Loading detector")
     detector = create_detector(config["detector"])
     # create matcher
+    logging.warning(f"Loading matcher")
     matcher = create_matcher(config["matcher"])
 
     absscale = AbosluteScaleComputer()
@@ -75,8 +87,14 @@ def run(args):
     fname = args.config.split('/')[-1].split('.')[0]
     log_fopen = open("results/" + fname + ".txt", mode='a')
 
+    logging.warning(f"fname: {fname}")
+
     vo = VisualOdometry(detector, matcher, loader.cam)
-    for i, img in enumerate(loader):
+
+    logging.warning(f"len(loader): {len(loader)}")
+
+    # for i, img in enumerate(loader):
+    for i, img in tqdm(enumerate(loader), total=len(loader)):
         gt_pose = loader.get_cur_pose()
         R, t = vo.update(img, absscale.update(gt_pose))
 
@@ -99,11 +117,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='python_vo')
     parser.add_argument('--config', type=str, default='params/kitti_superpoint_supergluematch.yaml',
                         help='config file')
-    parser.add_argument('--logging', type=str, default='INFO',
-                        help='logging level: NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL')
+    # parser.add_argument('--logging', type=str, default='INFO',
+    #                     help='logging level: NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL')
 
     args = parser.parse_args()
-
-    logging.basicConfig(level=logging._nameToLevel[args.logging])
+    coloredlogs.install(level='INFO', force=True)
+    # logging.basicConfig(level=logging._nameToLevel[args.logging])
 
     run(args)
