@@ -2,7 +2,7 @@
 
 import numpy as np
 import cv2
-
+import logging
 
 class VisualOdometry(object):
     """
@@ -40,6 +40,8 @@ class VisualOdometry(object):
         :param absolute_scale: the absolute scale between current frame and last frame
         :return: R and t of current frame
         """
+        logging.warning(f"[VisualOdometry] update")
+        logging.warning(f"type(image): {type(image)}")
         kptdesc = self.detector(image)
 
         # first frame

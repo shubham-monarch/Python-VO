@@ -66,18 +66,15 @@ def run(args):
         config = yaml.load(f)
 
     # create dataloader
-    logging.warning(f"Loading dataloader")
     loader = create_dataloader(config["dataset"])
 
-    logging.warning(f"loader: {loader}")
-    return
+    # return
 
     # exit(1)
     # create detector
-    logging.warning(f"Loading detector")
     detector = create_detector(config["detector"])
     # create matcher
-    logging.warning(f"Loading matcher")
+    
     matcher = create_matcher(config["matcher"])
 
     absscale = AbosluteScaleComputer()
@@ -87,30 +84,43 @@ def run(args):
     fname = args.config.split('/')[-1].split('.')[0]
     log_fopen = open("results/" + fname + ".txt", mode='a')
 
-    logging.warning(f"fname: {fname}")
+    logging.warning(f"=======================================")
+    logging.info(f"fname: {fname}")
+    # logging.info(f"dir(loader.cam): {dir(loader.cam)}")
+    zed_camera = loader.cam
+    for attr, value in zed_camera.__dict__.items():
+        logging.info(f"{attr}: {value}")
+    logging.warning(f"=======================================")
+    
+    
+    # vo = VisualOdometry(detector, matcher, loader.cam)
+    vo = VisualOdometry(detector, matcher, zed_camera)
 
-    vo = VisualOdometry(detector, matcher, loader.cam)
-
+    return
     logging.warning(f"len(loader): {len(loader)}")
 
     # for i, img in enumerate(loader):
     for i, img in tqdm(enumerate(loader), total=len(loader)):
-        gt_pose = loader.get_cur_pose()
-        R, t = vo.update(img, absscale.update(gt_pose))
+        # gt_pose = loader.get_cur_pose()
+        # R, t = vo.update(img, absscale.update(gt_pose))
+        
+        logging.warning(f"{i} type(img): {type(img)}")
+        
+        R, t = vo.update(img)
 
         # === log writer ==============================
-        print(i, t[0, 0], t[1, 0], t[2, 0], gt_pose[0, 3], gt_pose[1, 3], gt_pose[2, 3], file=log_fopen)
+        # print(i, t[0, 0], t[1, 0], t[2, 0], gt_pose[0, 3], gt_pose[1, 3], gt_pose[2, 3], file=log_fopen)
 
         # === drawer ==================================
         img1 = keypoints_plot(img, vo)
-        img2 = traj_plotter.update(t, gt_pose[:, 3])
+        # img2 = traj_plotter.update(t, gt_pose[:, 3])
 
         cv2.imshow("keypoints", img1)
-        cv2.imshow("trajectory", img2)
+        # cv2.imshow("trajectory", img2)
         if cv2.waitKey(10) == 27:
             break
 
-    cv2.imwrite("results/" + fname + '.png', img2)
+    # cv2.imwrite("results/" + fname + '.png', img2)
 
 
 if __name__ == "__main__":

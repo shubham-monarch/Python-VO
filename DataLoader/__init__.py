@@ -1,4 +1,6 @@
-from .KITTILoader import KITTILoader
+# from .KITTILoader import KITTILoader
+from .ZEDLoader import KITTILoader
+
 from .SequenceImageLoader import SequenceImageLoader
 from .TUMRGBLoader import TUMRGBLoader
 import logging, coloredlogs
