@@ -66,6 +66,7 @@ def run(args):
         config = yaml.load(f)
 
     # create dataloader
+    # loader is KITTILoader or ZEDLoader
     loader = create_dataloader(config["dataset"])
 
     # return
@@ -96,9 +97,18 @@ def run(args):
     # vo = VisualOdometry(detector, matcher, loader.cam)
     vo = VisualOdometry(detector, matcher, zed_camera)
 
-    return
-    logging.warning(f"len(loader): {len(loader)}")
+    logging.info(f"len(loader): {len(loader)}")
 
+    x = enumerate(loader)
+    # logging.warning(f"type(x): {type(x)}")
+    # logging.warning(f"dir(x): {dir(x)}")
+
+
+    for img in loader:
+        logging.info(f"type(img): {type(img)}")
+        break
+
+    # return
     # for i, img in enumerate(loader):
     for i, img in tqdm(enumerate(loader), total=len(loader)):
         # gt_pose = loader.get_cur_pose()
