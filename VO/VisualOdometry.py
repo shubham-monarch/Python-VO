@@ -71,9 +71,13 @@ class VisualOdometry(object):
             E, mask = cv2.findEssentialMat(matches['cur_keypoints'], matches['ref_keypoints'],
                                            focal=self.focal, pp=self.pp,
                                            method=cv2.RANSAC, prob=0.999, threshold=1.0)
-            _, R, t, mask = cv2.recoverPose(E, matches['cur_keypoints'], matches['ref_keypoints'],
+            inlier_cnt, R, t, mask = cv2.recoverPose(E, matches['cur_keypoints'], matches['ref_keypoints'],
                                             focal=self.focal, pp=self.pp)
-
+            
+            logging.warning(f"=====================================================")
+            logging.warning(f"INLIER_CNT: {inlier_cnt}")
+            logging.warning(f"=====================================================")
+            
             # get absolute pose based on absolute_scale
             if (absolute_scale > 0.1):
                 self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)

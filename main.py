@@ -17,6 +17,17 @@ from Matchers import create_matcher
 from VO.VisualOdometry import VisualOdometry, AbosluteScaleComputer
 import time
 
+# [TO-DO]
+# - tune script
+# - tests
+# - sampling
+# - integrate with main.sh
+# - add jump / reverse / stationary state detection 
+# - extract straight segments
+# -filter sharp turns that go unregistered
+
+
+
 def keypoints_plot(img, vo):
     if img.shape[2] == 1:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
@@ -104,13 +115,14 @@ class TrajPlotter(object):
     #     return self.traj
 
 RESET_IDX = 500
+INPUT_FOLDER = "front_2024-02-13-07-52-14.svo"
 
 def run(args):
     with open(args.config, 'r') as f:
         # config = yaml.load(f, Loader=yaml.FullLoader)
         config = yaml.load(f)
 
-    loader = create_dataloader(config["dataset"])
+    loader = create_dataloader(config["dataset"], INPUT_FOLDER)
     detector = create_detector(config["detector"])
     matcher = create_matcher(config["matcher"])
 

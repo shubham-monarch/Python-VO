@@ -19,11 +19,12 @@ class KITTILoader(object):
         "start": 0
     }
 
-    def __init__(self, config={}):
-        
+    def __init__(self, input_folder,  config={}):
+        logging.warning(f"[KITTILoader] __init__")
         # logging.warning(f"[ZEDLoader] __init__")
         self.config = self.default_config
         self.config = {**self.config, **config}
+        self.input_folder = input_folder
         # logging.info("KITTI Dataset config: ")
         # logging.info(self.config)
 
@@ -31,8 +32,12 @@ class KITTILoader(object):
 
         # image id
         self.img_id = self.config["start"]
+        # self.img_N = len(glob.glob(pathname=self.config["root_path"] + "/sequences/" \
+        #                                     + self.config["sequence"] + "/image_0/*.png"))
+        
         self.img_N = len(glob.glob(pathname=self.config["root_path"] + "/sequences/" \
-                                            + self.config["sequence"] + "/image_0/*.png"))
+                                            + self.config["sequence"] + f"/{self.input_folder}/*.png"))
+        
         self.base_dir  =self.config["root_path"] + "/sequences/" \
                                             + self.config["sequence"] + "/image_0/"
         # logging.warning(f"self.images_path: {self.}")
