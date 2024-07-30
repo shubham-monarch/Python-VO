@@ -39,7 +39,7 @@ class TrajPlotter(object):
         self.errors = []
         # self.traj = np.zeros((600, 600, 3), dtype=np.uint8)
         # visualization window dims
-        self.h,self.w = (800, 1500)
+        self.h,self.w = (400, 700)
         self.traj = np.zeros((self.h, self.w, 3), dtype=np.uint8)
         self.frame_cnt = 0
         if reset_idx:

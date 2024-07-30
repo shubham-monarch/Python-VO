@@ -77,10 +77,15 @@ class VisualOdometry(object):
             logging.warning(f"=====================================================")
             logging.warning(f"INLIER_CNT: {inlier_cnt}")
             logging.warning(f"=====================================================")
-            
+
             # get absolute pose based on absolute_scale
-            if (absolute_scale > 0.1):
-                self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
+            # if (absolute_scale > 0.1):
+            #     self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
+            #     self.cur_R = R.dot(self.cur_R)
+
+            if (inlier_cnt > 15):
+                # self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
+                self.cur_t = self.cur_t + 1.0 * self.cur_R.dot(t)
                 self.cur_R = R.dot(self.cur_R)
 
         self.kptdescs["ref"] = self.kptdescs["cur"]
