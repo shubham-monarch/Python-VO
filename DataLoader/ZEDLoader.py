@@ -63,7 +63,7 @@ class KITTILoader(object):
         return self
 
     def __next__(self):
-        logging.warning(f"[ZEDLoader] __next__")        
+        # logging.warning(f"[ZEDLoader] __next__")        
         
         if self.img_id < self.img_N:
             file_path = Path(os.path.join(self.input_dir, self.sorted_images[self.img_id]))

@@ -34,8 +34,15 @@ class VisualOdometry(object):
         self.cur_R = None
         self.cur_t = None
 
+        self.inliers = []
+
         if reset_idx:
             self.reset_idx = reset_idx
+
+
+    def get_inliers(self):
+        return self.inliers
+
 
     def update(self, image, absolute_scale=1):
         """
@@ -48,10 +55,13 @@ class VisualOdometry(object):
         if self.reset_idx > 0:
             if self.index > 0 and self.index % self.reset_idx == 0:
                 self.index = 0
-                time.sleep(1)
+                logging.warning("=======================")
+                logging.warning(f"[VisualOdometry] reset")
+                logging.warning("=======================")
+                time.sleep(2)
         
         kptdesc = self.detector(image)
-
+        
         # first frame
         if self.index == 0:
             # save keypoints and descriptors
@@ -74,19 +84,26 @@ class VisualOdometry(object):
             inlier_cnt, R, t, mask = cv2.recoverPose(E, matches['cur_keypoints'], matches['ref_keypoints'],
                                             focal=self.focal, pp=self.pp)
             
-            logging.warning(f"=====================================================")
-            logging.warning(f"INLIER_CNT: {inlier_cnt}")
-            logging.warning(f"=====================================================")
+            # logging.warning(f"=====================================================")
+            # logging.warning(f"INLIER_CNT: {inlier_cnt}")
+            logging.info(f"INLIER_CNT: {inlier_cnt}")
+            # logging.warning(f"=====================================================")
 
             # get absolute pose based on absolute_scale
             # if (absolute_scale > 0.1):
             #     self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
             #     self.cur_R = R.dot(self.cur_R)
-
-            if (inlier_cnt > 15):
+            self.inliers.append(inlier_cnt)
+            inlier_cutoff = 50
+            if (inlier_cnt > inlier_cutoff):
                 # self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
                 self.cur_t = self.cur_t + 1.0 * self.cur_R.dot(t)
                 self.cur_R = R.dot(self.cur_R)
+            else:
+                logging.error("=======================")
+                logging.error(f"INLIER_CNT: < {inlier_cutoff}")  
+                logging.error("=======================")
+                time.sleep(2)
 
         self.kptdescs["ref"] = self.kptdescs["cur"]
 

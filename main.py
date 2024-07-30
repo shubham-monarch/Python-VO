@@ -16,6 +16,7 @@ from Detectors import create_detector
 from Matchers import create_matcher
 from VO.VisualOdometry import VisualOdometry, AbosluteScaleComputer
 import time
+import matplotlib.pyplot as plt
 
 # [TO-DO]
 # - tune script
@@ -46,7 +47,10 @@ class TrajPlotter(object):
             self.reset_idx = reset_idx
 
     def reset(self):
-        logging.info(f"[TrajPlotter] reset")
+        # logging.info("=======================")
+        # logging.info(f"[TrajPlotter] reset")
+        # logging.info("=======================")
+                
         # self.traj = np.zeros((600, 1000, 3), dtype=np.uint8)
         self.traj = np.zeros((self.h, self.w, 3), dtype=np.uint8)
         
@@ -54,7 +58,7 @@ class TrajPlotter(object):
         if self.reset_idx  > 0:
             if self.frame_cnt > 0 and self.frame_cnt % self.reset_idx ==  0:
                 self.reset()
-                time.sleep(1)
+                # time.sleep(1)
         
         x, z = est_xyz[0], est_xyz[2]
         
@@ -65,8 +69,8 @@ class TrajPlotter(object):
         # draw_x, draw_y = int(x) + 500, int(z) + 290
         draw_x, draw_y = int(x) + (self.w // 2), int(z) + (self.h // 2)
         
-        logging.info(f"(x,z): ({x},{z})")
-        logging.info(f"(draw_x, draw_y): ({draw_x},{draw_y})\n")
+        # logging.info(f"(x,z): ({x},{z})")
+        # logging.info(f"(draw_x, draw_y): ({draw_x},{draw_y})\n")
 
         # draw trajectory
         cv2.circle(self.traj, (draw_x, draw_y), 1, (0, 255, 0), 1)
@@ -115,15 +119,16 @@ class TrajPlotter(object):
     #     return self.traj
 
 RESET_IDX = 500
-# INPUT_FOLDER = "front_2024-02-13-07-52-14.svo"
-INPUT_FOLDER = "front_2023-11-03-10-46-17.svo"
+BASE_INPUT_FOLDER = "blueberry/frogmore_site1B"
+SVO_FOLDER = "front_2024-02-14-12-21-24.svo"
+INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
 def run(args):
     with open(args.config, 'r') as f:
         # config = yaml.load(f, Loader=yaml.FullLoader)
         config = yaml.load(f)
 
-    loader = create_dataloader(config["dataset"], INPUT_FOLDER)
+    loader = create_dataloader(config["dataset"], INPUT_FOLDER_PATH)
     detector = create_detector(config["detector"])
     matcher = create_matcher(config["matcher"])
 
@@ -134,13 +139,13 @@ def run(args):
     fname = args.config.split('/')[-1].split('.')[0]
     log_fopen = open("results/" + fname + ".txt", mode='a')
 
-    logging.warning(f"=======================================")
+    logging.warning("=======================")
     logging.info(f"fname: {fname}")
     zed_camera = loader.cam
     for attr, value in zed_camera.__dict__.items():
         logging.info(f"{attr}: {value}")
-    logging.warning(f"=======================================")
-    
+    logging.warning("=======================")
+                
     # vo = VisualOdometry(detector, matcher, loader.cam)
     vo = VisualOdometry(detector, matcher, zed_camera, RESET_IDX)
 
@@ -148,17 +153,20 @@ def run(args):
 
     x = enumerate(loader)
     
-    for i, img in tqdm(enumerate(loader), total=len(loader)):
+    # for i, img in tqdm(enumerate(loader), total=len(loader)):
+    for i, img in enumerate(loader):
         # gt_pose = loader.get_cur_pose()
         # R, t = vo.update(img, absscale.update(gt_pose))
         
-        logging.warning(f"{i} / {total_frames} img.shape: {img.shape} ")
+        # logging.warning(f"{i} / {total_frames} img.shape: {img.shape} ")
+        logging.warning(f"PROCESSING {i} / {total_frames} FRAME")
         
         R, t = vo.update(img)
+        # time.sleep(0.1)
 
         # === log writer ==============================
         # print(i, t[0, 0], t[1, 0], t[2, 0], gt_pose[0, 3], gt_pose[1, 3], gt_pose[2, 3], file=log_fopen)
-        logging.info(f"{i} : ({t[0, 0]}, {t[1, 0]}, {t[2, 0]}")
+        # logging.info(f"{i} : ({t[0, 0]}, {t[1, 0]}, {t[2, 0]}")
         # === drawer ==================================
         
         img1 = keypoints_plot(img, vo)
@@ -169,7 +177,24 @@ def run(args):
         cv2.imshow("trajectory", img2)
         if cv2.waitKey(10) == 27:
             break
+    
+    logging.info(f"END OF VO PIPELINE!")
+    inliers = vo.get_inliers()
 
+    x, y = zip(*inliers)
+
+    # Create a scatter plot
+    plt.scatter(x, y)
+
+    # Optionally, set titles and labels
+    plt.title('Inliers')
+    plt.xlabel('X coordinate')
+    plt.ylabel('Y coordinate')
+
+    # Show the plot
+    plt.show()
+
+        
     # cv2.imwrite("results/" + fname + '.png', img2)
 
 
