@@ -3,13 +3,14 @@
 import numpy as np
 import cv2
 import logging
+import time
 
 class VisualOdometry(object):
     """
     A simple frame by frame visual odometry
     """
 
-    def __init__(self, detector, matcher, cam):
+    def __init__(self, detector, matcher, cam, reset_idx = None):
         """
         :param detector: a feature detector can detect keypoints their descriptors
         :param matcher: a keypoints matcher matching keypoints between two frames
@@ -33,6 +34,9 @@ class VisualOdometry(object):
         self.cur_R = None
         self.cur_t = None
 
+        if reset_idx:
+            self.reset_idx = reset_idx
+
     def update(self, image, absolute_scale=1):
         """
         update a new image to visual odometry, and compute the pose
@@ -40,8 +44,12 @@ class VisualOdometry(object):
         :param absolute_scale: the absolute scale between current frame and last frame
         :return: R and t of current frame
         """
-        logging.warning(f"[VisualOdometry] update")
-        logging.warning(f"type(image): {type(image)}")
+        # resetting 
+        if self.reset_idx > 0:
+            if self.index > 0 and self.index % self.reset_idx == 0:
+                self.index = 0
+                time.sleep(1)
+        
         kptdesc = self.detector(image)
 
         # first frame

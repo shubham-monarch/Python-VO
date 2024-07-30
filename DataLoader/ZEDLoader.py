@@ -21,37 +21,13 @@ class KITTILoader(object):
 
     def __init__(self, config={}):
         
-        logging.warning(f"[ZEDLoader] __init__")
+        # logging.warning(f"[ZEDLoader] __init__")
         self.config = self.default_config
         self.config = {**self.config, **config}
-        logging.info("KITTI Dataset config: ")
-        logging.info(self.config)
+        # logging.info("KITTI Dataset config: ")
+        # logging.info(self.config)
 
         self.cam = PinholeCamera(1241.0, 376.0, 1093.2768, 1093.2768, 964.989, 569.276)
-
-
-        # if self.config["sequence"] in ["00", "01", "02"]:
-        #     self.cam = PinholeCamera(1241.0, 376.0, 718.8560, 718.8560, 607.1928, 185.2157)
-        # elif self.config["sequence"] in ["03"]:
-        #     self.cam = PinholeCamera(1242.0, 375.0, 721.5377, 721.5377, 609.5593, 172.854)
-        # elif self.config["sequence"] in ["04", "05", "06", "07", "08", "09", "10"]:
-        #     self.cam = PinholeCamera(1226.0, 370.0, 707.0912, 707.0912, 601.8873, 183.1104)
-        # else:
-        #     raise ValueError(f"Unknown sequence number: {self.config['sequence']}")
-
-        # read ground truth pose
-        # self.pose_path = self.config["root_path"] + "/poses/" + self.config["sequence"] + ".txt"
-        # self.gt_poses = []
-        # with open(self.pose_path) as f:
-        #     lines = f.readlines()
-        #     for line in lines:
-        #         ss = line.strip().split()
-        #         pose = np.zeros((1, len(ss)))
-        #         for i in range(len(ss)):
-        #             pose[0, i] = float(ss[i])
-
-        #         pose.resize([3, 4])
-        #         self.gt_poses.append(pose)
 
         # image id
         self.img_id = self.config["start"]
@@ -69,10 +45,10 @@ class KITTILoader(object):
         self.sorted_images = sorted(filtered_files, key=lambda x: int(x.split('_')[1].split('.')[0]))
 
         # logging.info(f"{self.sorted_images[:30]}")
-        logging.info(f"type(self.sorted_images[0]): {type(self.sorted_images[0])}")
+        # logging.info(f"type(self.sorted_images[0]): {type(self.sorted_images[0])}")
         
-        logging.warning(f"self.img_id: {self.img_id}")
-        logging.warning(f"self.img_N: {self.img_N}")
+        # logging.warning(f"self.img_id: {self.img_id}")
+        # logging.warning(f"self.img_N: {self.img_N}")
 
     def get_cur_pose(self):
         return self.gt_poses[self.img_id - 1]
@@ -81,25 +57,31 @@ class KITTILoader(object):
         logging.warning(f"[ZEDLoader] __getitem__")
         file_name = self.config["root_path"] + "/sequences/" + self.config["sequence"] \
                     + "/image_0/" + str(item).zfill(6) + ".png"
-        logging.warning(f"__getitem__ file_name: {file_name}")
+        # logging.warning(f"__getitem__ file_name: {file_name}")
         img = cv2.imread(file_name)
+        (h, w) = (self.cam.height, self.cam.width)
+        
+        img = cv2.resize(img, (w, h))   
         return img
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        logging.warning(f"[ZEDLoader] __next__")        
-        logging.warning(f"self.img_id: {self.img_id}")  
-        logging.warning(f"self.img_N: {self.img_N}")
+        # logging.warning(f"[ZEDLoader] __next__")        
+        # logging.warning(f"self.img_id: {self.img_id}")  
+        # logging.warning(f"self.img_N: {self.img_N}")
 
         if self.img_id < self.img_N:
             # file_name = self.config["root_path"] + "/sequences/" + self.config["sequence"] \
             #             + "/image_0/" + str(self.img_id).zfill(6) + ".png"
             file_name = self.base_dir + self.sorted_images[self.img_id]
-            logging.warning(f"__next__ file_name: {file_name}") 
+            # logging.warning(f"__next__ file_name: {file_name}") 
             img = cv2.imread(file_name)
+            (h, w) = (int(self.cam.height), int(self.cam.width))
 
+            img = cv2.resize(img, (w, h))   
+            
             self.img_id += 1
 
             return img
