@@ -32,7 +32,7 @@ class FrameByFrameMatcher(object):
             else:
                 self.matcher = cv2.BFMatcher()
         elif self.config["type"] == "FLANN":
-            logging.info("creating FLANN matcher...")
+            # logging.info("creating FLANN matcher...")
             # FLANN parameters
             FLANN_INDEX_KDTREE = 1
             index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=self.config["FLANN"]["kdTrees"])

@@ -115,7 +115,8 @@ class TrajPlotter(object):
     #     return self.traj
 
 RESET_IDX = 500
-INPUT_FOLDER = "front_2024-02-13-07-52-14.svo"
+# INPUT_FOLDER = "front_2024-02-13-07-52-14.svo"
+INPUT_FOLDER = "front_2023-11-03-11-13-52.svo"
 
 def run(args):
     with open(args.config, 'r') as f:
