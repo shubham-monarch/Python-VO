@@ -70,44 +70,63 @@ class TrajPlotter(object):
         # draw trajectory
         cv2.circle(self.traj, (draw_x, draw_y), 1, (0, 255, 0), 1)
         return self.traj
+'''
+[TO-DO]
+- tune script
+- error-handling
+  - vineyards/front_2024-06-05-09-48-13.svo
+- abstract frame sequence extraction to support different interfaces
+- implement class interface
+- prepare final test case folder with well-distributed dataset
+- update end condition
+- handling large continuos valid segment
+- datasets testing status
+  - vineyards
+  - blueberry 
+      - 1A
+      - 1B [DONE]
+  - apple
+  - check aws console
+- single / multiple svo viable patch extraction 
+- add visualization functions
+- visualisze + extract the viable patch lengths 
+- detect jumps
+- testing
+- sampling viable segments
+- integrate with main.sh
+- check dir-change  
+'''
 
-# [TO-DO]
-# - tune script
-# - error-handling
-#   - vineyards/front_2024-06-05-09-48-13.svo
-# - update end condition
-# - handling large continuos valid segment
-# - datasets testing status
-#   - vineyards
-#   - blueberry 
-#       - 1A
-#       - 1B [DONE]
-#   - apple
-#   - check aws console
-# - single / multiple svo viable patch extraction 
-# - add visualization functions
-# - visualisze + extract the viable patch lengths 
-# - detect jumps
-# - testing
-# - sampling viable segments
-# - integrate with main.sh
-# - check dir-change  
+
+''''
+[TESTING STATUS]
+- vineyards * 
+  - RJM -> need to fix E crash
+  - wente-test -> [svo extraction in progress]
+  - gallo -> [pending]
+- blueberry
+    - 1A 
+    - 1B -> need to test reverse case condition
+- apple
+- raisins
+- dairy 
+
+'''
 
 
 
-# [TEST CASES ]
+# [IMPORTANT TEST CASES]
 # - REVERSE
 #   - blueberry/frogmore_site1B/front_2024-02-14-12-47-32.svo
 # - CRASHING due to camera blockages
 #  - vineyards/RJM/
 #       - front_2024-06-05-09-48-13.svo
 #       - front_2024-06-05-09-48-13.svo
-# - INCORRECT SEGMENT LENGTH
-#   - vineyards/RJM/front_2024-06-06-09-21-19.svo
+
 
 RESET_IDX = 500
-BASE_INPUT_FOLDER = "vineyards/RJM"
-SVO_FOLDER = "front_2024-06-06-09-21-19.svo"
+BASE_INPUT_FOLDER = "blueberry/frogmore_siteA"
+SVO_FOLDER = "front_2024-02-14-05-22-20.svo"
 INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
 def run(args):

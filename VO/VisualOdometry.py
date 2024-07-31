@@ -76,7 +76,7 @@ class VisualOdometry(object):
         # logger.info(f"INLIER_CNT: {inlier_cnt} ")
         # logger.info(f"THETA_Y: {R}")  # Assuming self.thetaY(R) returns 'R' for this example
 
-
+    # theta-y in degrees
     def thetaY(self, R): 
         theta = np.arctan2(-R[2, 0], np.sqrt(R[2, 1]**2 + R[2, 2]**2))
         return np.degrees(theta)
@@ -158,7 +158,9 @@ class VisualOdometry(object):
                 # self.en = self.frame_idx
             else:
                 logging.error("=======================")
-                logging.error(f"FLAG CONDITION NOT MET!")  
+                logging.error(f"[{self.frame_idx}] FLAG CONDITION NOT MET!")  
+                if(self.thetaY(R) > cutoff_theta_y):
+                    logging.info(f"THETA_Y: {self.thetaY(R)}")
                 logging.error("=======================")
                 # time.sleep()
                 seq_len  = self.frame_idx - self.seq_st
@@ -170,7 +172,7 @@ class VisualOdometry(object):
                     logging.info(f"ADDING [{self.frame_idx} - {self.seq_st} = {seq_len}] TO SEQUENCE LIST!")  
                     logging.info("=======================")
                     
-                    self.seq_st = self.frame_idx
+                self.seq_st = self.frame_idx
         
         self.kptdescs["ref"] = self.kptdescs["cur"]
 
