@@ -1,10 +1,15 @@
+# cache folders
 __pycache__/*
 **/__pycache__/*
 
+# folders
 test_imgs/
 
+# miscellaneous
 =4.2b1
 
+# extensions
 *.swp
+*.log
 
 .vscode

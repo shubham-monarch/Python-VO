@@ -59,7 +59,7 @@ class TrajPlotter(object):
         
     def update(self, est_xyz, gt_xyz = None):
 
-        logging.info(f"[TJ IDX]: {self.frame_cnt}")        
+        # logging.info(f"[TJ IDX]: {self.frame_cnt}")        
         if self.reset_idx:
             if self.frame_cnt > 0 and self.frame_cnt % self.reset_idx ==  0:
                 self.reset()
@@ -146,22 +146,26 @@ def run(args):
     
     logging.info(f"END OF VO PIPELINE!")
     inliers = vo.get_inliers()
+    thetaYs = vo.get_thetaYs()
 
-    # x, y = zip(*inliers)
+    fig, ax1 = plt.subplots()
 
-    # # Create a scatter plot
-    # plt.scatter(x, y)
+    ax2 = ax1.twinx()
 
-    # # Optionally, set titles and labels
-    # plt.title('Inliers')
-    # plt.xlabel('X coordinate')
-    # plt.ylabel('Y coordinate')
+    ax1.plot(inliers, 'g-', label='Inliers')
+    ax2.plot(thetaYs, 'b-', label='Theta Ys')
 
-    # # Show the plot
-    # plt.show()
+    ax1.set_ylabel('Inliers', color='g')
+    ax2.set_ylabel('Theta Ys', color='b')
 
-        
-    # cv2.imwrite("results/" + fname + '.png', img2)
+    ax1.set_xlabel('Sample Index')
+
+    plt.title('Inliers and Theta Ys')
+
+    ax1.legend(loc='upper left')
+    ax2.legend(loc='upper right')
+
+    plt.show()
 
 
 if __name__ == "__main__":

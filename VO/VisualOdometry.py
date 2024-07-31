@@ -34,15 +34,55 @@ class VisualOdometry(object):
         self.cur_R = None
         self.cur_t = None
 
-        self.inliers = []
+        # custom logger
+        self.logger = self.setup_logger()
+
+        # vo accuracy params
+        self.inliers_ = []
+        self.thetaY_ =  []
 
         if reset_idx:
             self.reset_idx = reset_idx
 
+    
+
+    def setup_logger(self):
+        logger = logging.getLogger('VisualOdometry')
+        logger.setLevel(logging.INFO)  # Step 4: Set the logger level
+
+        file_handler = logging.FileHandler('visual_odometry.log')  # Log to a file
+        console_handler = logging.StreamHandler()  # Log to the console
+
+        file_handler.setLevel(logging.INFO)
+        console_handler.setLevel(logging.INFO)
+
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        console_handler.setFormatter(formatter)
+
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+
+        return logger
+
+        # # Example usage
+        # inlier_cnt = 100  # Example variable
+        # R = "some_matrix"  # Example variable
+        # logger.info(f"INLIER_CNT: {inlier_cnt} ")
+        # logger.info(f"THETA_Y: {R}")  # Assuming self.thetaY(R) returns 'R' for this example
+
+
+    def thetaY(self, R): 
+        theta = np.arctan2(-R[2, 0], np.sqrt(R[2, 1]**2 + R[2, 2]**2))
+        return np.degrees(theta)
 
     def get_inliers(self):
-        return self.inliers
+        return self.inliers_
 
+    def get_thetaYs(self):
+        return self.thetaY_
+    
+    
 
     def update(self, image, absolute_scale=1):
         """
@@ -51,7 +91,7 @@ class VisualOdometry(object):
         :param absolute_scale: the absolute scale between current frame and last frame
         :return: R and t of current frame
         """
-        logging.warning(f"[VO IDX]: {self.index}")
+        # logging.warning(f"[VO IDX]: {self.index}")
         # resetting 
         if self.reset_idx > 0:
             if self.index > 0 and self.index % self.reset_idx == 0:
@@ -85,16 +125,17 @@ class VisualOdometry(object):
             inlier_cnt, R, t, mask = cv2.recoverPose(E, matches['cur_keypoints'], matches['ref_keypoints'],
                                             focal=self.focal, pp=self.pp)
             
-            # logging.warning(f"=====================================================")
-            # logging.warning(f"INLIER_CNT: {inlier_cnt}")
-            logging.info(f"INLIER_CNT: {inlier_cnt}")
-            # logging.warning(f"=====================================================")
-
+            # logging.info(f"INLIER_CNT: {inlier_cnt} ")
+            # logging.info(f"THETA_Y: {self.thetaY(R)}")
+            self.logger.info(f"INLIER_CNT: {inlier_cnt} ")
+            self.logger.info(f"THETA_Y: {self.thetaY(R)}")
+            
             # get absolute pose based on absolute_scale
             # if (absolute_scale > 0.1):
             #     self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
             #     self.cur_R = R.dot(self.cur_R)
-            self.inliers.append(inlier_cnt)
+            self.inliers_.append(inlier_cnt)
+            self.thetaY_.append(self.thetaY(R))
             
             # flag conditions
             inlier_cutoff = 50
