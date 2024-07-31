@@ -42,6 +42,11 @@ class VisualOdometry(object):
         self.inliers_ = []
         self.thetaY_ =  []
 
+        # sequence 
+        self.seq_st = 0
+        self.seq_en = 0
+        self.sequence_duration = []
+
         if reset_idx:
             self.reset_idx = reset_idx
 
@@ -82,6 +87,9 @@ class VisualOdometry(object):
 
     def get_thetaYs(self):
         return self.thetaY_
+    
+    def get_viable_sequences(self):
+        return self.sequence_duration
     
     
 
@@ -128,20 +136,13 @@ class VisualOdometry(object):
             
             # logging.info(f"INLIER_CNT: {inlier_cnt} ")
             # logging.info(f"THETA_Y: {self.thetaY(R)}")
-            # self.logger.info(f"[{self.frame_idx}]")
-            # self.logger.info(f"INLIER_CNT: {inlier_cnt} ")
-            # self.logger.info(f"THETA_Y: {self.thetaY(R)}")
             
-            # get absolute pose based on absolute_scale
-            # if (absolute_scale > 0.1):
-            #     self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
-            #     self.cur_R = R.dot(self.cur_R)
             self.inliers_.append(inlier_cnt)
             self.thetaY_.append(self.thetaY(R))
             
             # flag conditions
             cutoff_inliers_cnt = 100
-            cutoff_theta_y = 0.2
+            cutoff_theta_y = 0.4
             x, y, z = t[0], t[1], t[2]
 
             flag = True
@@ -155,12 +156,23 @@ class VisualOdometry(object):
                 # self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
                 self.cur_t = self.cur_t + 1.0 * self.cur_R.dot(t)
                 self.cur_R = R.dot(self.cur_R)
+                self.en = self.frame_idx
             else:
                 logging.error("=======================")
                 logging.error(f"FLAG CONDITION NOT MET!")  
                 logging.error("=======================")
                 # time.sleep()
-
+                seq_len  = self.seq_en - self.seq_st
+                cutoff_seq_len = 50
+                if seq_len > cutoff_seq_len:
+                    self.sequence_duration.append(seq_len)
+                    
+                    logging.info("=======================")
+                    logging.info(f"ADDING [{self.seq_en} - {self.seq_st} = {seq_len}] TO SEQUENCE LIST!")  
+                    logging.info("=======================")
+                    
+                    self.seq_st = self.frame_idx
+        
         self.kptdescs["ref"] = self.kptdescs["cur"]
 
         self.index += 1

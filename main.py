@@ -10,6 +10,7 @@ import logging, coloredlogs
 from tqdm import tqdm
 
 from utils.tools import plot_keypoints
+from utils.vis_helpers import plot_histograms
 
 from DataLoader import create_dataloader
 from Detectors import create_detector
@@ -20,14 +21,20 @@ import matplotlib.pyplot as plt
 
 # [TO-DO]
 # - tune script
+# - datasets to test open
+#   - vinerows
+#   - blueberry 1A
+#   - check aws console
+# - single / multiple svo viable patch extraction 
+# - add visualization functions
+# - visualize + extract the viable patch lengths 
 # - tune theta-y threshold to filter turns
-# - detect u-turns / sharp turns / jumps
+# - detect jumps
 # - tests
 # - sampling
 # - integrate with main.sh
-# - add jump / dir-change / stationary state detection 
-# - extract straight segments
-# -filter sharp turns that go unregistered
+# - check dir-change  
+ 
 
 
 
@@ -79,14 +86,14 @@ class TrajPlotter(object):
         return self.traj
 
 
-# important svo files
-# - blueberry/frogmore_site1B/
-    # - front_2024-02-14-12-47-32.svo
+# [TEST CASES ]
+# - REVERSE
+#     - blueberry/frogmore_site1B/front_2024-02-14-12-47-32.svo
 
 
 RESET_IDX = 500
-BASE_INPUT_FOLDER = "blueberry/frogmore_site1B"
-SVO_FOLDER = "front_2024-02-14-12-57-32.svo/"
+BASE_INPUT_FOLDER = "vineyards/RJM"
+SVO_FOLDER = "front_2024-06-05-08-54-33.svo"
 INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
 def run(args):
@@ -136,26 +143,33 @@ def run(args):
         # cv2.imshow("trajectory", img2)
         if cv2.waitKey(10) == 27:
             break
-    
+
+        if i % 200 == 0:
+            seq_list = vo.get_viable_sequences()
+            logging.info("=======================")
+            logging.info(f"seq_list: {seq_list}")
+            logging.info("=======================")
+            plot_histograms(seq_list)
+
     logging.info(f"END OF VO PIPELINE!")
-    inliers = vo.get_inliers()
-    thetaYs = vo.get_thetaYs()
+    # inliers = vo.get_inliers()
+    # thetaYs = vo.get_thetaYs()
+    
+    # plt.figure(figsize=(10, 4))  # Optional: Adjust the figure size
+    # plt.hist(inliers, bins=30, color='blue', alpha=0.7)  # Adjust bins and color as needed
+    # plt.title('Histogram of Inliers')
+    # plt.xlabel('Inlier Count')
+    # plt.ylabel('Frequency')
 
-    plt.figure(figsize=(10, 4))  # Optional: Adjust the figure size
-    plt.hist(inliers, bins=30, color='blue', alpha=0.7)  # Adjust bins and color as needed
-    plt.title('Histogram of Inliers')
-    plt.xlabel('Inlier Count')
-    plt.ylabel('Frequency')
-
-    # Plotting the histogram for thetaYs
-    plt.figure(figsize=(10, 4))  # Optional: Adjust the figure size
-    plt.hist(thetaYs, bins=100, range =(-10, 10) , color='green', alpha=0.7)  # Adjust bins and color as needed
-    plt.title('Histogram of ThetaYs')
-    plt.xlabel('ThetaY Value')
-    plt.ylabel('Frequency')
-    plt.savefig(f"results/" + fname + ".png")
-    plt.show()  # Display the histograms
-    # fig, ax1 = plt.subplots()
+    # # Plotting the histogram for thetaYs
+    # plt.figure(figsize=(10, 4))  # Optional: Adjust the figure size
+    # plt.hist(thetaYs, bins=100, range =(-10, 10) , color='green', alpha=0.7)  # Adjust bins and color as needed
+    # plt.title('Histogram of ThetaYs')
+    # plt.xlabel('ThetaY Value')
+    # plt.ylabel('Frequency')
+    # plt.savefig(f"results/" + fname + ".png")
+    # plt.show()  # Display the histograms
+    # # fig, ax1 = plt.subplots()
 
     # ax2 = ax1.twinx()
 
