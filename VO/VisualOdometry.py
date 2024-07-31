@@ -26,6 +26,7 @@ class VisualOdometry(object):
 
         # frame index counter
         self.index = 0
+        self.frame_idx = 0 
 
         # keypoints and descriptors
         self.kptdescs = {}
@@ -51,17 +52,17 @@ class VisualOdometry(object):
         logger.setLevel(logging.INFO)  # Step 4: Set the logger level
 
         file_handler = logging.FileHandler('visual_odometry.log')  # Log to a file
-        console_handler = logging.StreamHandler()  # Log to the console
+        # console_handler = logging.StreamHandler()  # Log to the console
 
         file_handler.setLevel(logging.INFO)
-        console_handler.setLevel(logging.INFO)
+        # console_handler.setLevel(logging.INFO)
 
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         file_handler.setFormatter(formatter)
-        console_handler.setFormatter(formatter)
+        # console_handler.setFormatter(formatter)
 
         logger.addHandler(file_handler)
-        logger.addHandler(console_handler)
+        # logger.addHandler(console_handler)
 
         return logger
 
@@ -96,10 +97,10 @@ class VisualOdometry(object):
         if self.reset_idx > 0:
             if self.index > 0 and self.index % self.reset_idx == 0:
                 self.index = 0
-                logging.warning("=======================")
-                logging.warning(f"[VisualOdometry] reset")
-                logging.warning("=======================")
-                time.sleep(2)
+                # logging.warning("=======================")
+                # logging.warning(f"[VisualOdometry] reset")
+                # logging.warning("=======================")
+                # time.sleep(2)
         
         kptdesc = self.detector(image)
         
@@ -127,8 +128,9 @@ class VisualOdometry(object):
             
             # logging.info(f"INLIER_CNT: {inlier_cnt} ")
             # logging.info(f"THETA_Y: {self.thetaY(R)}")
-            self.logger.info(f"INLIER_CNT: {inlier_cnt} ")
-            self.logger.info(f"THETA_Y: {self.thetaY(R)}")
+            # self.logger.info(f"[{self.frame_idx}]")
+            # self.logger.info(f"INLIER_CNT: {inlier_cnt} ")
+            # self.logger.info(f"THETA_Y: {self.thetaY(R)}")
             
             # get absolute pose based on absolute_scale
             # if (absolute_scale > 0.1):
@@ -138,13 +140,16 @@ class VisualOdometry(object):
             self.thetaY_.append(self.thetaY(R))
             
             # flag conditions
-            inlier_cutoff = 50
-            x, y,  z = t[0], t[1], t[2]
+            cutoff_inliers_cnt = 100
+            cutoff_theta_y = 0.2
+            x, y, z = t[0], t[1], t[2]
 
-            flag = False
-            flag = flag or (inlier_cnt > inlier_cutoff)
-            flag = flag or (abs(z) > abs(x))
-            flag = flag or (abs(z) > abs(y))    
+            flag = True
+            flag = flag and (inlier_cnt > cutoff_theta_y)
+            flag = flag and (abs(z) > abs(x))
+            flag = flag and (abs(z) > abs(y))
+            flag = flag and (abs(z) > 0.0)
+            flag = flag and (self.thetaY(R) <= cutoff_theta_y)  
 
             if (flag):
                 # self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
@@ -154,11 +159,12 @@ class VisualOdometry(object):
                 logging.error("=======================")
                 logging.error(f"FLAG CONDITION NOT MET!")  
                 logging.error("=======================")
-                time.sleep(2)
+                # time.sleep()
 
         self.kptdescs["ref"] = self.kptdescs["cur"]
 
         self.index += 1
+        self.frame_idx += 1
         return self.cur_R, self.cur_t
 
 

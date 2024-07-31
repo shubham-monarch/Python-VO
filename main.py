@@ -20,8 +20,8 @@ import matplotlib.pyplot as plt
 
 # [TO-DO]
 # - tune script
+# - tune theta-y threshold to filter turns
 # - detect u-turns / sharp turns / jumps
-# - fix mystery vo reset
 # - tests
 # - sampling
 # - integrate with main.sh
@@ -49,10 +49,10 @@ class TrajPlotter(object):
             self.reset_idx = reset_idx
 
     def reset(self):
-        logging.info("=======================")
-        logging.info(f"[TrajPlotter] reset at {self.frame_cnt} frame!")
-        logging.info("=======================")
-        time.sleep(5)
+        # logging.info("=======================")
+        # logging.info(f"[TrajPlotter] reset at {self.frame_cnt} frame!")
+        # logging.info("=======================")
+        # time.sleep(5)
             
         # self.traj = np.zeros((600, 1000, 3), dtype=np.uint8)
         self.traj = np.zeros((self.h, self.w, 3), dtype=np.uint8)
@@ -86,7 +86,7 @@ class TrajPlotter(object):
 
 RESET_IDX = 500
 BASE_INPUT_FOLDER = "blueberry/frogmore_site1B"
-SVO_FOLDER = "front_2024-02-14-12-47-32.svo"
+SVO_FOLDER = "front_2024-02-14-12-57-32.svo/"
 INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
 def run(args):
@@ -128,19 +128,12 @@ def run(args):
         logging.warning(f"PROCESSING {i} / {total_frames} FRAME")
         
         R, t = vo.update(img)
-        # time.sleep(0.1)
-
-        # === log writer ==============================
-        # print(i, t[0, 0], t[1, 0], t[2, 0], gt_pose[0, 3], gt_pose[1, 3], gt_pose[2, 3], file=log_fopen)
-        # logging.info(f"{i} : ({t[0, 0]}, {t[1, 0]}, {t[2, 0]}")
-        # === drawer ==================================
         
         img1 = keypoints_plot(img, vo)
-        # img2 = traj_plotter.update(t, gt_pose[:, 3])
         img2 = traj_plotter.update(t)
 
         cv2.imshow("keypoints", img1)
-        cv2.imshow("trajectory", img2)
+        # cv2.imshow("trajectory", img2)
         if cv2.waitKey(10) == 27:
             break
     
@@ -148,24 +141,38 @@ def run(args):
     inliers = vo.get_inliers()
     thetaYs = vo.get_thetaYs()
 
-    fig, ax1 = plt.subplots()
+    plt.figure(figsize=(10, 4))  # Optional: Adjust the figure size
+    plt.hist(inliers, bins=30, color='blue', alpha=0.7)  # Adjust bins and color as needed
+    plt.title('Histogram of Inliers')
+    plt.xlabel('Inlier Count')
+    plt.ylabel('Frequency')
 
-    ax2 = ax1.twinx()
+    # Plotting the histogram for thetaYs
+    plt.figure(figsize=(10, 4))  # Optional: Adjust the figure size
+    plt.hist(thetaYs, bins=100, range =(-10, 10) , color='green', alpha=0.7)  # Adjust bins and color as needed
+    plt.title('Histogram of ThetaYs')
+    plt.xlabel('ThetaY Value')
+    plt.ylabel('Frequency')
+    plt.savefig(f"results/" + fname + ".png")
+    plt.show()  # Display the histograms
+    # fig, ax1 = plt.subplots()
 
-    ax1.plot(inliers, 'g-', label='Inliers')
-    ax2.plot(thetaYs, 'b-', label='Theta Ys')
+    # ax2 = ax1.twinx()
 
-    ax1.set_ylabel('Inliers', color='g')
-    ax2.set_ylabel('Theta Ys', color='b')
+    # # ax1.plot(inliers, 'g-', label='Inliers')
+    # ax2.plot(thetaYs, 'b-', label='Theta Ys')
 
-    ax1.set_xlabel('Sample Index')
+    # # ax1.set_ylabel('Inliers', color='g')
+    # ax2.set_ylabel('Theta Ys', color='b')
 
-    plt.title('Inliers and Theta Ys')
+    # # ax1.set_xlabel('Sample Index')
 
-    ax1.legend(loc='upper left')
-    ax2.legend(loc='upper right')
+    # plt.title('Inliers and Theta Ys')
 
-    plt.show()
+    # ax1.legend(loc='upper lesft')
+    # ax2.legend(loc='upper right')
+    # # plt.savefig(f"inliers/" + fname + ".png")
+    # plt.show()
 
 
 if __name__ == "__main__":
