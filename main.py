@@ -20,10 +20,12 @@ import matplotlib.pyplot as plt
 
 # [TO-DO]
 # - tune script
+# - detect u-turns / sharp turns / jumps
+# - fix mystery vo reset
 # - tests
 # - sampling
 # - integrate with main.sh
-# - add jump / reverse / stationary state detection 
+# - add jump / dir-change / stationary state detection 
 # - extract straight segments
 # -filter sharp turns that go unregistered
 
@@ -47,80 +49,44 @@ class TrajPlotter(object):
             self.reset_idx = reset_idx
 
     def reset(self):
-        # logging.info("=======================")
-        # logging.info(f"[TrajPlotter] reset")
-        # logging.info("=======================")
-                
+        logging.info("=======================")
+        logging.info(f"[TrajPlotter] reset at {self.frame_cnt} frame!")
+        logging.info("=======================")
+        time.sleep(5)
+            
         # self.traj = np.zeros((600, 1000, 3), dtype=np.uint8)
         self.traj = np.zeros((self.h, self.w, 3), dtype=np.uint8)
         
     def update(self, est_xyz, gt_xyz = None):
-        if self.reset_idx  > 0:
+
+        logging.info(f"[TJ IDX]: {self.frame_cnt}")        
+        if self.reset_idx:
             if self.frame_cnt > 0 and self.frame_cnt % self.reset_idx ==  0:
                 self.reset()
                 # time.sleep(1)
         
         x, z = est_xyz[0], est_xyz[2]
+        # x, z = est_xyz[1], est_xyz[2]
         
         self.frame_cnt += 1
         
         est = np.array([x, z]).reshape(2)
         
-        # draw_x, draw_y = int(x) + 500, int(z) + 290
         draw_x, draw_y = int(x) + (self.w // 2), int(z) + (self.h // 2)
         
-        # logging.info(f"(x,z): ({x},{z})")
-        # logging.info(f"(draw_x, draw_y): ({draw_x},{draw_y})\n")
-
         # draw trajectory
         cv2.circle(self.traj, (draw_x, draw_y), 1, (0, 255, 0), 1)
-        # cv2.circle(self.traj, (true_x, true_y), 1, (0, 0, 255), 2)
-        # cv2.rectangle(self.traj, (10, 20), (600, 80), (0, 0, 0), -1)
-        # cv2.rectangle(self.traj, (0, 0), (self.w, self.h), (0, 0, 0), -1)
-        # cv2.rectangle(self.traj, (10, 20), (800, 80), (0, 0, 0), -1)
-        
-        # draw text
-        # text = "[AvgError] %2.4fm" % (avg_error)
-        # cv2.putText(self.traj, text, (20, 40),
-        #             cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, 8)
-        self.frame_cnt += 1
-        # time.sleep(0.1)
         return self.traj
 
 
-    # def update(self, est_xyz, gt_xyz):
-    #     x, z = est_xyz[0], est_xyz[2]
-    #     gt_x, gt_z = gt_xyz[0], gt_xyz[2]
+# important svo files
+# - blueberry/frogmore_site1B/
+    # - front_2024-02-14-12-47-32.svo
 
-    #     est = np.array([x, z]).reshape(2)
-    #     gt = np.array([gt_x, gt_z]).reshape(2)
-
-    #     error = np.linalg.norm(est - gt)
-
-    #     self.errors.append(error)
-
-    #     avg_error = np.mean(np.array(self.errors))
-
-    #     # === drawer ==================================
-    #     # each point
-    #     draw_x, draw_y = int(x) + 290, int(z) + 90
-    #     true_x, true_y = int(gt_x) + 290, int(gt_z) + 90
-
-    #     # draw trajectory
-    #     cv2.circle(self.traj, (draw_x, draw_y), 1, (0, 255, 0), 1)
-    #     cv2.circle(self.traj, (true_x, true_y), 1, (0, 0, 255), 2)
-    #     cv2.rectangle(self.traj, (10, 20), (600, 80), (0, 0, 0), -1)
-
-    #     # draw text
-    #     text = "[AvgError] %2.4fm" % (avg_error)
-    #     cv2.putText(self.traj, text, (20, 40),
-    #                 cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1, 8)
-
-    #     return self.traj
 
 RESET_IDX = 500
 BASE_INPUT_FOLDER = "blueberry/frogmore_site1B"
-SVO_FOLDER = "front_2024-02-14-12-21-24.svo"
+SVO_FOLDER = "front_2024-02-14-12-47-32.svo"
 INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
 def run(args):
@@ -181,18 +147,18 @@ def run(args):
     logging.info(f"END OF VO PIPELINE!")
     inliers = vo.get_inliers()
 
-    x, y = zip(*inliers)
+    # x, y = zip(*inliers)
 
-    # Create a scatter plot
-    plt.scatter(x, y)
+    # # Create a scatter plot
+    # plt.scatter(x, y)
 
-    # Optionally, set titles and labels
-    plt.title('Inliers')
-    plt.xlabel('X coordinate')
-    plt.ylabel('Y coordinate')
+    # # Optionally, set titles and labels
+    # plt.title('Inliers')
+    # plt.xlabel('X coordinate')
+    # plt.ylabel('Y coordinate')
 
-    # Show the plot
-    plt.show()
+    # # Show the plot
+    # plt.show()
 
         
     # cv2.imwrite("results/" + fname + '.png', img2)

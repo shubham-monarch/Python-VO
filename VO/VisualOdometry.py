@@ -51,6 +51,7 @@ class VisualOdometry(object):
         :param absolute_scale: the absolute scale between current frame and last frame
         :return: R and t of current frame
         """
+        logging.warning(f"[VO IDX]: {self.index}")
         # resetting 
         if self.reset_idx > 0:
             if self.index > 0 and self.index % self.reset_idx == 0:
@@ -94,14 +95,23 @@ class VisualOdometry(object):
             #     self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
             #     self.cur_R = R.dot(self.cur_R)
             self.inliers.append(inlier_cnt)
+            
+            # flag conditions
             inlier_cutoff = 50
-            if (inlier_cnt > inlier_cutoff):
+            x, y,  z = t[0], t[1], t[2]
+
+            flag = False
+            flag = flag or (inlier_cnt > inlier_cutoff)
+            flag = flag or (abs(z) > abs(x))
+            flag = flag or (abs(z) > abs(y))    
+
+            if (flag):
                 # self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
                 self.cur_t = self.cur_t + 1.0 * self.cur_R.dot(t)
                 self.cur_R = R.dot(self.cur_R)
             else:
                 logging.error("=======================")
-                logging.error(f"INLIER_CNT: < {inlier_cutoff}")  
+                logging.error(f"FLAG CONDITION NOT MET!")  
                 logging.error("=======================")
                 time.sleep(2)
 
