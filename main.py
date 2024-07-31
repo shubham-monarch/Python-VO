@@ -19,21 +19,7 @@ from VO.VisualOdometry import VisualOdometry, AbosluteScaleComputer
 import time
 import matplotlib.pyplot as plt
 
-# [TO-DO]
-# - tune script
-# - datasets to test open
-#   - vinerows
-#   - blueberry 1A
-#   - check aws console
-# - single / multiple svo viable patch extraction 
-# - add visualization functions
-# - visualize + extract the viable patch lengths 
-# - tune theta-y threshold to filter turns
-# - detect jumps
-# - tests
-# - sampling
-# - integrate with main.sh
-# - check dir-change  
+
  
 
 
@@ -85,15 +71,43 @@ class TrajPlotter(object):
         cv2.circle(self.traj, (draw_x, draw_y), 1, (0, 255, 0), 1)
         return self.traj
 
+# [TO-DO]
+# - tune script
+# - error-handling
+#   - vineyards/front_2024-06-05-09-48-13.svo
+# - update end condition
+# - handling large continuos valid segment
+# - datasets testing status
+#   - vineyards
+#   - blueberry 
+#       - 1A
+#       - 1B [DONE]
+#   - apple
+#   - check aws console
+# - single / multiple svo viable patch extraction 
+# - add visualization functions
+# - visualisze + extract the viable patch lengths 
+# - detect jumps
+# - testing
+# - sampling viable segments
+# - integrate with main.sh
+# - check dir-change  
+
+
 
 # [TEST CASES ]
 # - REVERSE
-#     - blueberry/frogmore_site1B/front_2024-02-14-12-47-32.svo
-
+#   - blueberry/frogmore_site1B/front_2024-02-14-12-47-32.svo
+# - CRASHING due to camera blockages
+#  - vineyards/RJM/
+#       - front_2024-06-05-09-48-13.svo
+#       - front_2024-06-05-09-48-13.svo
+# - INCORRECT SEGMENT LENGTH
+#   - vineyards/RJM/front_2024-06-06-09-21-19.svo
 
 RESET_IDX = 500
 BASE_INPUT_FOLDER = "vineyards/RJM"
-SVO_FOLDER = "front_2024-06-05-08-54-33.svo"
+SVO_FOLDER = "front_2024-06-06-09-21-19.svo"
 INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
 def run(args):

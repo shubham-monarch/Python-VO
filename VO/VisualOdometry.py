@@ -44,7 +44,6 @@ class VisualOdometry(object):
 
         # sequence 
         self.seq_st = 0
-        self.seq_en = 0
         self.sequence_duration = []
 
         if reset_idx:
@@ -156,19 +155,19 @@ class VisualOdometry(object):
                 # self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
                 self.cur_t = self.cur_t + 1.0 * self.cur_R.dot(t)
                 self.cur_R = R.dot(self.cur_R)
-                self.en = self.frame_idx
+                # self.en = self.frame_idx
             else:
                 logging.error("=======================")
                 logging.error(f"FLAG CONDITION NOT MET!")  
                 logging.error("=======================")
                 # time.sleep()
-                seq_len  = self.seq_en - self.seq_st
+                seq_len  = self.frame_idx - self.seq_st
                 cutoff_seq_len = 50
                 if seq_len > cutoff_seq_len:
                     self.sequence_duration.append(seq_len)
                     
                     logging.info("=======================")
-                    logging.info(f"ADDING [{self.seq_en} - {self.seq_st} = {seq_len}] TO SEQUENCE LIST!")  
+                    logging.info(f"ADDING [{self.frame_idx} - {self.seq_st} = {seq_len}] TO SEQUENCE LIST!")  
                     logging.info("=======================")
                     
                     self.seq_st = self.frame_idx
