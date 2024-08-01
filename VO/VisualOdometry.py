@@ -51,8 +51,8 @@ class VisualOdometry(object):
 
         # defining cutoff
         self.CUTOFF_INLIER_CNT = 100
-        # cutoff_theta_y = 0.4
-        self.CUTOFF_THETA_Y = 1.0
+        # self.CUTOFF_THETA_Y = 1.0
+        self.CUTOFF_THETA_Y = 0.5
         # sequence length cutoff
         self.CUTOFF_SEQ_LEN = 50
 
@@ -180,7 +180,7 @@ class VisualOdometry(object):
                 # self.en = self.frame_idx
             else:
                 logging.error("=======================")
-                logging.error(f"[{self.frame_idx}] FLAG CONDITION NOT MET!")  
+                logging.error(f"FLAG CONDITION NOT MET!")  
                 logging.error("=======================")
                 # time.sleep(1)
 

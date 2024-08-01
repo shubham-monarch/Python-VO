@@ -21,6 +21,7 @@ import time
 import matplotlib.pyplot as plt
 import fnmatch
 import shutil
+import random
  
 
 
@@ -130,7 +131,7 @@ IMPORTANT SVO FILES
 '''
 
 
-def generate_viable_sequences(input_dir : str, sequences : tuple, output_dir = "outputs"):
+def write_seq_to_disk(input_dir : str, sequences : tuple, output_dir = "outputs"):
     
     input_dir_ = os.path.join("test_imgs/sequences/00/", input_dir)
 
@@ -150,22 +151,18 @@ def generate_viable_sequences(input_dir : str, sequences : tuple, output_dir = "
     for (st,en) in tqdm(sequences):
         output_dir_ = os.path.join(output_dir, f"{st}_{en}")
     
-        logging.warning(f"output_dir: {output_dir_}")
+        # logging.warning(f"output_dir: {output_dir_}")
         
         delete_folders([output_dir_])
         create_folders([output_dir_])
         
         for i in range(st, en + 1):
-            logging.info(f"{i}: {sorted_images[i]}")
+            # logging.info(f"{i}: {sorted_images[i]}")
             shutil.copy(sorted_images[i], output_dir_)    
     
 
-RESET_IDX = 500
-BASE_INPUT_FOLDER = "tested"
-SVO_FOLDER = "front_2023-11-03-10-51-17.svo/"
-INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
-def run(args):
+def run(args, INPUT_FOLDER_PATH):
     with open(args.config, 'r') as f:
         # config = yaml.load(f, Loader=yaml.FullLoader)
         config = yaml.load(f)
@@ -175,7 +172,7 @@ def run(args):
     matcher = create_matcher(config["matcher"])
 
     absscale = AbosluteScaleComputer()
-    traj_plotter = TrajPlotter(RESET_IDX)
+    # traj_plotter = TrajPlotter(RESET_IDX)
 
     # log
     fname = args.config.split('/')[-1].split('.')[0]
@@ -189,7 +186,8 @@ def run(args):
     logging.warning("=======================")
                 
     # vo = VisualOdometry(detector, matcher, loader.cam)
-    vo = VisualOdometry(detector, matcher, zed_camera, RESET_IDX)
+    # vo = VisualOdometry(detector, matcher, zed_camera, RESET_IDX)
+    vo = VisualOdometry(detector, matcher, zed_camera)
 
     total_frames = len(loader)
 
@@ -206,48 +204,111 @@ def run(args):
         R, t = vo.update(img)
         
         img1 = keypoints_plot(img, vo)
-        img2 = traj_plotter.update(t)
+        # img2 = traj_plotter.update(t)
 
         cv2.imshow("keypoints", img1)
         # cv2.imshow("trajectory", img2)
         if cv2.waitKey(10) == 27:
             break
 
-    seq_list = vo.get_viable_sequences()
-
-    # logging.info("=======================")
-    # logging.info(f"seq_list: {seq_list}")
-    # logging.info("=======================")
-    
-    plot_histograms(seq_list)
-
-    seq_pairs = vo.get_sequence_pairs()
+    cv2.destroyAllWindows()
     
     logging.info("=======================")
-    logging.info(f"seq_list: {seq_pairs}")
+    logging.info("VO HAS FINISHED!")
     logging.info("=======================")
     
-    generate_viable_sequences(INPUT_FOLDER_PATH, seq_pairs)
+    return vo
 
-    logging.info(f"END OF VO PIPELINE!")
+
+    # seq_list = vo.get_viable_sequences()
+
+    # # logging.info("=======================")
+    # # logging.info(f"seq_list: {seq_list}")
+    # # logging.info("=======================")
+    
+    # plot_histograms(seq_list)
+
+    # # seq_pairs = vo.get_sequence_pairs()
+
+    # # logging.info("=======================")
+    # # logging.info(f"seq_list: {seq_pairs}")
+    # # logging.info("=======================")
+    
+    # write_seq_to_disk(INPUT_FOLDER_PATH, seq_pairs)
+
+    # logging.info(f"END OF VO PIPELINE!")
     
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='python_vo')
-    # parser.add_argument('--config', type=str, default='params/kitti_superpoint_supergluematch.yaml',
-    #                     help='config file')
-    
+    parser = argparse.ArgumentParser(description='python_vo')    
     parser.add_argument('--config', type=str, default='params/kitti_superpoint_flannmatch.yaml',
                         help='config file')
     
-    # parser.add_argument('--config', type=str, default='params/kitti_sift_flannmatch.yaml',
-    #                     help='config file')
-    
-    # parser.add_argument('--logging', type=str, default='INFO',
-    #                     help='logging level: NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL')
 
     args = parser.parse_args()
     coloredlogs.install(level='INFO', force=True)
-    # logging.basicConfig(level=logging._nameToLevel[args.logging])
+    
+    # RESET_IDX = 500
+    # BASE_INPUT_FOLDER = "tested"
+    # SVO_FOLDER = "front_2023-11-03-10-51-17.svo/"
+    # INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
-    run(args)
+    PREFIX_FOLDER ="test_imgs/sequences/00/"
+    IMAGES_FOLDER = "vineyards"
+    INPUT_FOLDER = f"{PREFIX_FOLDER}{IMAGES_FOLDER}"
+    
+    # number of svo folders to test
+    CUTOFF_NUM_FOLDERS = 2
+    
+    # storing relative and abs paths
+    svo_folders_abs = []
+    svo_folders_rel = []
+    
+    for root, dirs, files in os.walk(INPUT_FOLDER, topdown=True):
+        if not dirs:
+            svo_folders_abs.append(root)
+
+    random.shuffle(svo_folders_abs)
+
+    for i, folder in enumerate(svo_folders_abs):
+        if i > CUTOFF_NUM_FOLDERS:
+            break
+        
+        all = folder.split('/')
+        relevant = all[3:]
+        folder_ ='/'.join(relevant)
+        
+        svo_folders_rel.append(folder_)
+    
+    logging.info("=======================")
+    logging.info("FOLLOWING SVO FOLDERS WILL BE TESTED")
+    for i, folder in enumerate(svo_folders_rel):
+        logging.info(f"{i} {folder}")
+    logging.info("=======================\n")
+        
+    time.sleep(2)
+
+    for i, folder in enumerate(svo_folders_rel):
+        logging.error("=======================")
+        logging.error(f"STARTING VO FOR [{i} / {len(svo_folders_rel)}] FOLDER!")
+        logging.error("=======================")
+        time.sleep(5)
+        
+        vo  = run(args, folder)  
+        # seq_list = vo.get_viable_sequences()
+        # plot_histograms(seq_list)
+
+        # (st1, en1), (st2, en2), ...
+        seq_tuples = vo.get_sequence_pairs()
+
+        logging.info("=======================")
+        logging.info("SAVING SEQUENCES TO DISK!")
+        logging.info("=======================")
+        
+        time.sleep(1)
+        
+        write_seq_to_disk(folder, seq_tuples)
+
+        # logging.info(f"END OF VO PIPELINE!")
+
+        # run(args)
