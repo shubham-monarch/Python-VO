@@ -38,18 +38,26 @@ class VisualOdometry(object):
         # custom logger
         self.logger = self.setup_logger()
 
-        # vo accuracy params
+        # vo filtering
         self.inliers_ = []
         self.thetaY_ =  []
+        self.prev_z = 0
 
-        # sequence 
+        # sequence caluclations
         self.seq_st = 0
         self.sequence_duration = []
+        # collection of (st,en) pairs
+        self.sequence_pairs = []
 
-        if reset_idx:
-            self.reset_idx = reset_idx
+        # defining cutoff
+        self.CUTOFF_INLIER_CNT = 100
+        # cutoff_theta_y = 0.4
+        self.CUTOFF_THETA_Y = 1.0
+        # sequence length cutoff
+        self.CUTOFF_SEQ_LEN = 50
 
-    
+            
+        
 
     def setup_logger(self):
         logger = logging.getLogger('VisualOdometry')
@@ -90,25 +98,10 @@ class VisualOdometry(object):
     def get_viable_sequences(self):
         return self.sequence_duration
     
-    
+    def get_sequence_pairs(self):
+        return self.sequence_pairs
 
     def update(self, image, absolute_scale=1):
-        """
-        update a new image to visual odometry, and compute the pose
-        :param image: input image
-        :param absolute_scale: the absolute scale between current frame and last frame
-        :return: R and t of current frame
-        """
-        # logging.warning(f"[VO IDX]: {self.index}")
-        # resetting 
-        if self.reset_idx > 0:
-            if self.index > 0 and self.index % self.reset_idx == 0:
-                self.index = 0
-                # logging.warning("=======================")
-                # logging.warning(f"[VisualOdometry] reset")
-                # logging.warning("=======================")
-                # time.sleep(2)
-        
         kptdesc = self.detector(image)
         
         # first frame
@@ -140,16 +133,45 @@ class VisualOdometry(object):
             self.thetaY_.append(self.thetaY(R))
             
             # flag conditions
-            cutoff_inliers_cnt = 100
-            cutoff_theta_y = 0.4
             x, y, z = t[0], t[1], t[2]
 
+            # valid frame flag
             flag = True
-            flag = flag and (inlier_cnt > cutoff_theta_y)
+
+            # inlier count check
+            flag = flag and (inlier_cnt >= self.CUTOFF_INLIER_CNT)
+            # if inlier_cnt < cutoff_inliers_cnt:
+            #     logging.info("=======================")
+            #     logging.info(f"INLIER_CNT CONDITION NOT MET: {inlier_cnt} < {cutoff_inliers_cnt}")  
+            #     logging.info("=======================")
+            #     time.sleep(2)
+
+            # z-movement check
             flag = flag and (abs(z) > abs(x))
             flag = flag and (abs(z) > abs(y))
             flag = flag and (abs(z) > 0.0)
-            flag = flag and (self.thetaY(R) <= cutoff_theta_y)  
+            
+            # direction-change check
+            flag = flag and (z * self.prev_z >= 0)
+            
+            # if(z * self.prev_z < 0):
+            #     logging.info("=======================")
+            #     logging.info(f"DIRECTION CHANGE DETECTED: {z} * {self.prev_z} < 0")  
+            #     logging.info("=======================")
+            #     # time.sleep(0.5)
+
+            # updating self.prev_z
+            self.prev_z = z
+            
+            # angular movement check
+            flag = flag and (self.thetaY(R) <= self.CUTOFF_THETA_Y)  
+            
+            # if (self.thetaY(R) > cutoff_theta_y):
+            #     logging.info("=======================")
+            #     logging.info(f"THETA_Y CONDITION NOT MET: {self.thetaY(R)} > {cutoff_theta_y}")  
+            #     logging.info("=======================")
+            #     time.sleep(2)
+
 
             if (flag):
                 # self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
@@ -159,20 +181,21 @@ class VisualOdometry(object):
             else:
                 logging.error("=======================")
                 logging.error(f"[{self.frame_idx}] FLAG CONDITION NOT MET!")  
-                if(self.thetaY(R) > cutoff_theta_y):
-                    logging.info(f"THETA_Y: {self.thetaY(R)}")
                 logging.error("=======================")
-                # time.sleep()
-                seq_len  = self.frame_idx - self.seq_st
-                cutoff_seq_len = 50
-                if seq_len > cutoff_seq_len:
+                # time.sleep(1)
+
+                seq_len  = (self.frame_idx - 1)- self.seq_st
+                
+                if seq_len > self.CUTOFF_SEQ_LEN:
                     self.sequence_duration.append(seq_len)
-                    
+                    self.sequence_pairs.append((self.seq_st, self.frame_idx - 1))
                     logging.info("=======================")
-                    logging.info(f"ADDING [{self.frame_idx} - {self.seq_st} = {seq_len}] TO SEQUENCE LIST!")  
+                    logging.info(f"ADDING [{self.frame_idx - 1} - {self.seq_st} = {seq_len}] TO SEQUENCE_DURATION!")  
+                    logging.info(f"ADDING [{self.seq_st},{self.frame_idx - 1}] TO SEQUENCE_PAIRS!")  
                     logging.info("=======================")
+                    time.sleep(3)
                     
-                self.seq_st = self.frame_idx
+                self.seq_st = self.frame_idx + 1
         
         self.kptdescs["ref"] = self.kptdescs["cur"]
 

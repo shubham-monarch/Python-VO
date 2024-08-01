@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from utils.tools import plot_keypoints
 from utils.vis_helpers import plot_histograms
+from utils.io_utils import create_folders, delete_folders
 
 from DataLoader import create_dataloader
 from Detectors import create_detector
@@ -18,8 +19,8 @@ from Matchers import create_matcher
 from VO.VisualOdometry import VisualOdometry, AbosluteScaleComputer
 import time
 import matplotlib.pyplot as plt
-
-
+import fnmatch
+import shutil
  
 
 
@@ -75,58 +76,93 @@ class TrajPlotter(object):
 - tune script
 - error-handling
   - vineyards/front_2024-06-05-09-48-13.svo
+- add image extraction for selected segments
 - abstract frame sequence extraction to support different interfaces
 - implement class interface
-- prepare final test case folder with well-distributed dataset
+- prepare final demo-test case folder with well-distributed dataset
 - update end condition
+- make testing end to end
 - handling large continuos valid segment
-- datasets testing status
-  - vineyards
-  - blueberry 
-      - 1A
-      - 1B [DONE]
-  - apple
-  - check aws console
 - single / multiple svo viable patch extraction 
 - add visualization functions
 - visualisze + extract the viable patch lengths 
-- detect jumps
-- testing
 - sampling viable segments
 - integrate with main.sh
-- check dir-change  
 '''
 
 
 ''''
 [TESTING STATUS]
+- miscellaneous [IN PROGRESS]
 - vineyards * 
-  - RJM -> need to fix E crash
-  - wente-test -> [svo extraction in progress]
-  - gallo -> [pending]
+  - RJM -> []
+  - wente-test -> []
+  - gallo -> []
 - blueberry
-    - 1A 
-    - 1B -> need to test reverse case condition
+    - 1A -> []
+    - 1B -> []
 - apple
+    - agrimacs 
+    - quincy_fresh
+    - rj_orchards
+    - wsu_washington
 - raisins
 - dairy 
+'''
+
+'''
+IMPORTANT SVO FILES
+- front_2023-11-03-10-51-17.svo [miscellaneous]
 
 '''
 
 
+'''
+[IMPORTANT SVO FILES]
+- REVERSE
+    - blueberry/frogmore_site1B/front_2024-02-14-12-47-32.svo
+    - vineyards/gallo/2024_06_07_utc/svo_files/front_2024-06-04-13-30-56.svo
+    
+- CAMERA COVER CRASH / E-CRASH
+    - vineyards/RJM/
+        - front_2024-06-05-09-48-13.svo
+        - front_2024-06-05-09-48-13.svo
+'''
 
-# [IMPORTANT TEST CASES]
-# - REVERSE
-#   - blueberry/frogmore_site1B/front_2024-02-14-12-47-32.svo
-# - CRASHING due to camera blockages
-#  - vineyards/RJM/
-#       - front_2024-06-05-09-48-13.svo
-#       - front_2024-06-05-09-48-13.svo
 
+def generate_viable_sequences(input_dir : str, sequences : tuple, output_dir = "outputs"):
+    
+    input_dir_ = os.path.join("test_imgs/sequences/00/", input_dir)
+
+    img_N = len([file for file in os.listdir(input_dir_) if file.endswith('.png')]) 
+    logging.info(f"num_images: {img_N}")   
+    
+    images_list = os.listdir(input_dir_)
+    filtered_files = fnmatch.filter(images_list, "left_*.png")
+    sorted_images = sorted(filtered_files, key=lambda x: int(x.split('_')[1].split('.')[0]))
+    
+    # updating sorted images with full path
+    for i, image in enumerate(sorted_images):
+        image = os.path.join(input_dir_, image) 
+        sorted_images[i] = image
+
+    output_dir = os.path.join(output_dir, input_dir)
+    for (st,en) in tqdm(sequences):
+        output_dir_ = os.path.join(output_dir, f"{st}_{en}")
+    
+        logging.warning(f"output_dir: {output_dir_}")
+        
+        delete_folders([output_dir_])
+        create_folders([output_dir_])
+        
+        for i in range(st, en + 1):
+            logging.info(f"{i}: {sorted_images[i]}")
+            shutil.copy(sorted_images[i], output_dir_)    
+    
 
 RESET_IDX = 500
-BASE_INPUT_FOLDER = "blueberry/frogmore_siteA"
-SVO_FOLDER = "front_2024-02-14-05-22-20.svo"
+BASE_INPUT_FOLDER = "tested"
+SVO_FOLDER = "front_2023-11-03-10-51-17.svo/"
 INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
 def run(args):
@@ -177,50 +213,24 @@ def run(args):
         if cv2.waitKey(10) == 27:
             break
 
-        if i % 200 == 0:
-            seq_list = vo.get_viable_sequences()
-            logging.info("=======================")
-            logging.info(f"seq_list: {seq_list}")
-            logging.info("=======================")
-            plot_histograms(seq_list)
+    seq_list = vo.get_viable_sequences()
+
+    # logging.info("=======================")
+    # logging.info(f"seq_list: {seq_list}")
+    # logging.info("=======================")
+    
+    plot_histograms(seq_list)
+
+    seq_pairs = vo.get_sequence_pairs()
+    
+    logging.info("=======================")
+    logging.info(f"seq_list: {seq_pairs}")
+    logging.info("=======================")
+    
+    generate_viable_sequences(INPUT_FOLDER_PATH, seq_pairs)
 
     logging.info(f"END OF VO PIPELINE!")
-    # inliers = vo.get_inliers()
-    # thetaYs = vo.get_thetaYs()
     
-    # plt.figure(figsize=(10, 4))  # Optional: Adjust the figure size
-    # plt.hist(inliers, bins=30, color='blue', alpha=0.7)  # Adjust bins and color as needed
-    # plt.title('Histogram of Inliers')
-    # plt.xlabel('Inlier Count')
-    # plt.ylabel('Frequency')
-
-    # # Plotting the histogram for thetaYs
-    # plt.figure(figsize=(10, 4))  # Optional: Adjust the figure size
-    # plt.hist(thetaYs, bins=100, range =(-10, 10) , color='green', alpha=0.7)  # Adjust bins and color as needed
-    # plt.title('Histogram of ThetaYs')
-    # plt.xlabel('ThetaY Value')
-    # plt.ylabel('Frequency')
-    # plt.savefig(f"results/" + fname + ".png")
-    # plt.show()  # Display the histograms
-    # # fig, ax1 = plt.subplots()
-
-    # ax2 = ax1.twinx()
-
-    # # ax1.plot(inliers, 'g-', label='Inliers')
-    # ax2.plot(thetaYs, 'b-', label='Theta Ys')
-
-    # # ax1.set_ylabel('Inliers', color='g')
-    # ax2.set_ylabel('Theta Ys', color='b')
-
-    # # ax1.set_xlabel('Sample Index')
-
-    # plt.title('Inliers and Theta Ys')
-
-    # ax1.legend(loc='upper lesft')
-    # ax2.legend(loc='upper right')
-    # # plt.savefig(f"inliers/" + fname + ".png")
-    # plt.show()
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='python_vo')

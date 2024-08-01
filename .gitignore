@@ -5,6 +5,7 @@ __pycache__/*
 # folders
 test_imgs/
 results/*
+outputs/*
 # miscellaneous
 =4.2b1
 
