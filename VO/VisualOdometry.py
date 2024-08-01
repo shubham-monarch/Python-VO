@@ -10,7 +10,7 @@ class VisualOdometry(object):
     A simple frame by frame visual odometry
     """
 
-    def __init__(self, detector, matcher, cam, reset_idx = None):
+    def __init__(self, detector, matcher, cam, total_frames, reset_idx = None):
         """
         :param detector: a feature detector can detect keypoints their descriptors
         :param matcher: a keypoints matcher matching keypoints between two frames
@@ -42,6 +42,9 @@ class VisualOdometry(object):
         self.inliers_ = []
         self.thetaY_ =  []
         self.prev_z = 0
+
+        # total frames
+        self.total_frames = total_frames
 
         # sequence caluclations
         self.seq_st = 0
@@ -177,7 +180,14 @@ class VisualOdometry(object):
                 # self.cur_t = self.cur_t + absolute_scale * self.cur_R.dot(t)
                 self.cur_t = self.cur_t + 1.0 * self.cur_R.dot(t)
                 self.cur_R = R.dot(self.cur_R)
-                # self.en = self.frame_idx
+                if self.frame_idx == self.total_frames - 1:
+                    seq_len  = (self.frame_idx - 1)- self.seq_st
+                    self.sequence_duration.append(seq_len)
+                    self.sequence_pairs.append((self.seq_st, self.frame_idx - 1))
+                    logging.info("=======================")
+                    logging.info(f"ADDING [{self.frame_idx - 1} - {self.seq_st} = {seq_len}] TO SEQUENCE_DURATION!")  
+                    logging.info(f"ADDING [{self.seq_st},{self.frame_idx - 1}] TO SEQUENCE_PAIRS!")  
+                    logging.info("=======================")
             else:
                 logging.error("=======================")
                 logging.error(f"FLAG CONDITION NOT MET!")  
@@ -190,8 +200,8 @@ class VisualOdometry(object):
                     self.sequence_duration.append(seq_len)
                     self.sequence_pairs.append((self.seq_st, self.frame_idx - 1))
                     logging.info("=======================")
-                    logging.info(f"ADDING [{self.frame_idx - 1} - {self.seq_st} = {seq_len}] TO SEQUENCE_DURATION!")  
-                    logging.info(f"ADDING [{self.seq_st},{self.frame_idx - 1}] TO SEQUENCE_PAIRS!")  
+                    # logging.info(f"ADDING [{self.frame_idx - 1} - {self.seq_st} = {seq_len}] TO SEQUENCE_DURATION!")  
+                    logging.info(f"ADDING ({self.seq_st},{self.frame_idx - 1}) TO SEQUENCE_PAIRS!")  
                     logging.info("=======================")
                     time.sleep(3)
                     

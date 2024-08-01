@@ -80,6 +80,8 @@ class TrajPlotter(object):
 - add image extraction for selected segments
 - abstract frame sequence extraction to support different interfaces
 - implement class interface
+- support for multiple base folders in testing
+- add folder deletion
 - prepare final demo-test case folder with well-distributed dataset
 - update end condition
 - make testing end to end
@@ -136,7 +138,7 @@ def write_seq_to_disk(input_dir : str, sequences : tuple, output_dir = "outputs"
     input_dir_ = os.path.join("test_imgs/sequences/00/", input_dir)
 
     img_N = len([file for file in os.listdir(input_dir_) if file.endswith('.png')]) 
-    logging.info(f"num_images: {img_N}")   
+    # logging.info(f"num_images: {img_N}")   
     
     images_list = os.listdir(input_dir_)
     filtered_files = fnmatch.filter(images_list, "left_*.png")
@@ -187,11 +189,11 @@ def run(args, INPUT_FOLDER_PATH):
                 
     # vo = VisualOdometry(detector, matcher, loader.cam)
     # vo = VisualOdometry(detector, matcher, zed_camera, RESET_IDX)
-    vo = VisualOdometry(detector, matcher, zed_camera)
-
     total_frames = len(loader)
+    vo = VisualOdometry(detector, matcher, zed_camera, total_frames)
 
-    x = enumerate(loader)
+    
+    # x = enumerate(loader)
     
     # for i, img in tqdm(enumerate(loader), total=len(loader)):
     for i, img in enumerate(loader):
@@ -199,7 +201,7 @@ def run(args, INPUT_FOLDER_PATH):
         # R, t = vo.update(img, absscale.update(gt_pose))
         
         # logging.warning(f"{i} / {total_frames} img.shape: {img.shape} ")
-        logging.warning(f"PROCESSING {i} / {total_frames} FRAME")
+        logging.warning(f"PROCESSING [{i} / {total_frames}] FRAME")
         
         R, t = vo.update(img)
         
@@ -254,7 +256,7 @@ if __name__ == "__main__":
     # INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
     PREFIX_FOLDER ="test_imgs/sequences/00/"
-    IMAGES_FOLDER = "vineyards"
+    IMAGES_FOLDER = "apple_farm"
     INPUT_FOLDER = f"{PREFIX_FOLDER}{IMAGES_FOLDER}"
     
     # number of svo folders to test
@@ -283,7 +285,7 @@ if __name__ == "__main__":
     logging.info("=======================")
     logging.info("FOLLOWING SVO FOLDERS WILL BE TESTED")
     for i, folder in enumerate(svo_folders_rel):
-        logging.info(f"{i} {folder}")
+        logging.info(f"[{i}] {folder}")
     logging.info("=======================\n")
         
     time.sleep(2)

@@ -157,7 +157,8 @@ def delete_folders(folders):
 					logging.error(f"Error while deleting {folder_path}. Retrying...")
 					# time.sleep(1)  # wait for 1 second before retrying
 			else:
-				print(f"The folder {folder_path} does not exist.")	
+				pass
+				# print(f"The folder {folder_path} does not exist.")	
 	# logging.warning(f"Deleted the old files in {folders}!")
 		
 def create_folders(folders):
