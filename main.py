@@ -256,11 +256,11 @@ if __name__ == "__main__":
     # INPUT_FOLDER_PATH = f"{BASE_INPUT_FOLDER}/{SVO_FOLDER}"
 
     PREFIX_FOLDER ="test_imgs/sequences/00/"
-    IMAGES_FOLDER = "apple_farm"
+    IMAGES_FOLDER = "miscellaneous"
     INPUT_FOLDER = f"{PREFIX_FOLDER}{IMAGES_FOLDER}"
     
     # number of svo folders to test
-    CUTOFF_NUM_FOLDERS = 2
+    CUTOFF_NUM_FOLDERS = 5
     
     # storing relative and abs paths
     svo_folders_abs = []
@@ -273,7 +273,7 @@ if __name__ == "__main__":
     random.shuffle(svo_folders_abs)
 
     for i, folder in enumerate(svo_folders_abs):
-        if i > CUTOFF_NUM_FOLDERS:
+        if i >= CUTOFF_NUM_FOLDERS:
             break
         
         all = folder.split('/')
@@ -311,6 +311,9 @@ if __name__ == "__main__":
         
         write_seq_to_disk(folder, seq_tuples)
 
-        # logging.info(f"END OF VO PIPELINE!")
-
-        # run(args)
+    logging.info("=======================")
+    logging.info("DELETING THE INPUT SVO FOLDERS!")
+    logging.info("=======================")
+    
+    delete_folders(svo_folders_abs)
+        
